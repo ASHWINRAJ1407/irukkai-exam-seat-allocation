@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}{{ exam.name }} - Exam Schedule{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <div>
+        <a href="{{ url_for('exam_schedule.index') }}" class="btn btn-outline-secondary btn-sm mb-2"><i class="bi bi-arrow-left me-1"></i>Back</a>
+        <h1 class="page-title mb-0"><i class="bi bi-calendar-event me-2"></i>{{ exam.name }}</h1>
+    </div>
+    <div class="d-flex gap-2">
+        {% if schedules %}
+        <form action="{{ url_for('exam_schedule.clear_entries', exam_id=exam.id) }}" method="post" class="d-inline" onsubmit="return confirm('Clear ALL schedule entries and allocations for this exam? The exam will remain but you can add new entries or re-import.');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-outline-warning"><i class="bi bi-eraser me-1"></i>Clear All Entries</button>
+        </form>
+        {% endif %}
+        <form action="{{ url_for('exam_schedule.delete_all') }}" method="post" class="d-inline" onsubmit="return confirm('Delete this exam and ALL its schedules? This cannot be undone.');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="exam_id" value="{{ exam.id }}">
+            <button type="submit" class="btn btn-outline-danger"><i class="bi bi-trash me-1"></i>Delete Exam</button>
+        </form>
+    </div>
+</div>
+
+<div class="alert alert-info">
+    <i class="bi bi-info-circle me-2"></i><strong>Before allocation:</strong> Ensure you have selected the appropriate students/departments and batch. Filter students by batch/year group to include only relevant examinees.
+</div>
+
+<div class="card mb-4">
+    <div class="card-header"><i class="bi bi-plus-circle me-2"></i>Add Schedule Entry</div>
+    <div class="card-body">
+        <form method="post" action="{{ url_for('exam_schedule.add_entry', exam_id=exam.id) }}" class="row g-3">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="col-md-2">
+                <label class="form-label">Department</label>
+                <select name="department_id" class="form-select" required>
+                    <option value="">Select</option>
+                    {% for d in departments %}
+                    <option value="{{ d.id }}">{{ d.code }} - {{ d.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Subject</label>
+                <select name="subject_id" class="form-select" required>
+                    <option value="">Select</option>
+                    {% for s in subjects %}
+                    <option value="{{ s.id }}">{{ s.code }} - {{ s.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Date</label>
+                <input type="date" name="exam_date" class="form-control" required>
+            </div>
+            {% if not schedules %}
+            <div class="col-md-2">
+                <label class="form-label">Start</label>
+                <input type="time" name="start_time" class="form-control" required>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">End</label>
+                <input type="time" name="end_time" class="form-control" required>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Batch</label>
+                <input type="text" name="academic_year" class="form-control" value="{{ exam.academic_year or '2024-25' }}" required placeholder="e.g. 2022-26">
+            </div>
+            {% else %}
+            {# Defaults are taken from the first entry (stored on the exam) #}
+            <input type="hidden" name="start_time" value="{{ (exam.default_start_time.strftime('%H:%M') if exam.default_start_time else '') }}">
+            <input type="hidden" name="end_time" value="{{ (exam.default_end_time.strftime('%H:%M') if exam.default_end_time else '') }}">
+            <input type="hidden" name="academic_year" value="{{ exam.academic_year or '2024-25' }}">
+            <div class="col-md-6 d-flex align-items-end">
+                <div class="small text-muted">
+                    Using defaults: <strong>{{ exam.default_start_time.strftime('%H:%M') if exam.default_start_time else '--:--' }}</strong> –
+                    <strong>{{ exam.default_end_time.strftime('%H:%M') if exam.default_end_time else '--:--' }}</strong>,
+                    Batch: <strong>{{ exam.academic_year or '2024-25' }}</strong>
+                </div>
+            </div>
+            {% endif %}
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-plus me-1"></i>Add Entry</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><i class="bi bi-calendar3 me-2"></i>Schedule by Date</div>
+    <div class="card-body">
+        {% if schedules %}
+        {% for date_str, date_schedules in by_date %}
+        <h5 class="mt-3 mb-2"><i class="bi bi-calendar-date me-1"></i>{{ date_str }}</h5>
+        <table class="table table-sm table-hover">
+            <thead><tr><th>Department</th><th>Subject</th><th>Time</th><th>Actions</th></tr></thead>
+            <tbody>
+                {% for s in date_schedules %}
+                <tr>
+                    <td>{{ s.department.code if s.department else '' }} - {{ s.department.name if s.department else '' }}</td>
+                    <td>{{ s.subject.code if s.subject else '' }} - {{ s.subject.name if s.subject else '' }}</td>
+                    <td>{{ s.start_time.strftime('%H:%M') if s.start_time else '' }} - {{ s.end_time.strftime('%H:%M') if s.end_time else '' }}</td>
+                    <td>
+                        <form action="{{ url_for('exam_schedule.delete_entry', id=s.id) }}" method="post" class="d-inline" onsubmit="return confirm('Delete this entry?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endfor %}
+        {% else %}
+        <p class="text-muted mb-0">No schedule entries. Add entries using the form above.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

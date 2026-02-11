@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}Students - Exam Seat Allocation{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <h1 class="page-title mb-0"><i class="bi bi-people me-2"></i>Student Management</h1>
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="{{ url_for('students.add') }}" class="btn btn-outline-primary"><i class="bi bi-person-plus me-1"></i>Add Student</a>
+        <a href="{{ url_for('students.import_students') }}" class="btn btn-primary"><i class="bi bi-upload me-1"></i>Import from Excel</a>
+        {% if students %}
+        <form action="{{ url_for('students.delete_all') }}" method="post" class="d-inline" onsubmit="return confirm('Delete ALL students from database? This cannot be undone.');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-outline-danger"><i class="bi bi-trash me-1"></i>Delete All</button>
+        </form>
+        {% endif %}
+        {% if filters_applied and students %}
+        <form action="{{ url_for('students.delete_filtered') }}" method="post" class="d-inline" onsubmit="return confirm('Delete {{ filtered_count }} student(s) matching the current filters?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="department" value="{{ selected_dept or '' }}">
+            <input type="hidden" name="academic_year" value="{{ selected_year or '' }}">
+            <input type="hidden" name="section" value="{{ selected_section or '' }}">
+            <button type="submit" class="btn btn-outline-warning"><i class="bi bi-trash me-1"></i>Delete Filtered</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+{% if filters_applied %}
+<div class="alert alert-info mb-3 py-2">
+    <strong><i class="bi bi-people-fill me-2"></i>Showing {{ filtered_count }} student(s)</strong> — Department, Section, and/or Batch filters are applied.
+</div>
+{% endif %}
+
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Department</label>
+                <select name="department" class="form-select">
+                    <option value="">All Departments</option>
+                    {% for d in departments %}
+                    <option value="{{ d.id }}" {{ 'selected' if selected_dept == d.id|string else '' }}>{{ d.code }} - {{ d.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Section</label>
+                <select name="section" class="form-select">
+                    <option value="">All Sections</option>
+                    {% for s in sections %}
+                    <option value="{{ s }}" {{ 'selected' if selected_section == s else '' }}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Batch</label>
+                <select name="academic_year" class="form-select">
+                    <option value="">All Batches</option>
+                    {% for y in years %}
+                    <option value="{{ y }}" {{ 'selected' if selected_year == y else '' }}>{{ y }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2"><i class="bi bi-funnel me-1"></i>Filter</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if students %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Roll Number</th>
+                        <th>Name</th>
+                        <th>Department</th>
+                        <th>Section</th>
+                        <th>Batch</th>
+                        <th style="width: 100px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in students %}
+                    <tr>
+                        <td><code>{{ s.roll_number }}</code></td>
+                        <td>{{ s.name }}</td>
+                        <td>{{ s.department.code if s.department else '-' }}</td>
+                        <td>{{ s.section or '-' }}</td>
+                        <td>{{ s.academic_year }}</td>
+                        <td>
+                            <form action="{{ url_for('students.delete', id=s.id) }}" method="post" class="d-inline" onsubmit="return confirm('Delete this student?');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted text-center py-5"><i class="bi bi-people me-2"></i>No students found. Add students manually or import from Excel.</p>
+        <div class="text-center">
+            <a href="{{ url_for('students.add') }}" class="btn btn-outline-primary me-2">Add Student</a>
+            <a href="{{ url_for('students.import_students') }}" class="btn btn-primary">Import from Excel</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

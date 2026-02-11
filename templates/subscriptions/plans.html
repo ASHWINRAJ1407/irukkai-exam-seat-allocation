@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Subscription Plans - Exam Seat Allocation{% endblock %}
+{% block content %}
+<h1 class="page-title mb-3"><i class="bi bi-gem me-2"></i>Subscription &amp; Usage</h1>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-bank me-2"></i>Payment details</div>
+            <div class="card-body">
+                {% if settings %}
+                <p class="mb-2"><strong>Bank / UPI details:</strong></p>
+                <pre class="bg-light p-2 rounded small">{{ settings.bank_details or 'Not configured by administrator.' }}</pre>
+                <p class="mb-2"><strong>Instructions from administrator:</strong></p>
+                <pre class="bg-light p-2 rounded small">{{ settings.payment_instructions or 'Contact the administrator to know where to send payment.' }}</pre>
+                {% else %}
+                <p class="text-muted mb-0">Payment details are not configured yet. Please contact the administrator.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-person-badge me-2"></i>Your subscription</div>
+            <div class="card-body">
+                {% if current_subscription %}
+                <p class="mb-1"><strong>Active plan:</strong> {{ current_subscription.plan_id }}</p>
+                <p class="mb-1">Valid from <strong>{{ current_subscription.start_date }}</strong> to <strong>{{ current_subscription.end_date }}</strong>.</p>
+                <p class="text-success small mb-0">All timetable, scheduling, and allocation features are fully unlocked.</p>
+                {% else %}
+                <p class="mb-2">You are currently on the <strong>free plan</strong>.</p>
+                <p class="text-muted small mb-0">You can generate timetables, schedule exams, and allocate seats up to three times in total. After that, you must purchase a subscription.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-boxes me-2"></i>Available plans</span>
+    </div>
+    <div class="card-body">
+        {% if plans %}
+        <form method="post" action="{{ url_for('subscriptions.submit_payment') }}" class="row g-3">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="col-md-6">
+                <label class="form-label">Choose plan</label>
+                <select name="plan_id" class="form-select" required>
+                    <option value="">Select plan</option>
+                    {% for p in plans %}
+                    <option value="{{ p.id }}">{{ p.name }} — {{ p.duration_months }} month(s), ₹{{ p.price }}</option>
+                    {% endfor %}
+                </select>
+                <span class="form-text">Plan descriptions are configured by the administrator.</span>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Payment reference / UTR</label>
+                <input type="text" name="reference" class="form-control" placeholder="Enter UTR / transaction ID" required>
+                <span class="form-text">After transferring to the admin's bank account, paste the reference number here.</span>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-send-check me-1"></i>Submit payment for review</button>
+            </div>
+        </form>
+        {% else %}
+        <p class="text-muted mb-0">No subscription plans have been created yet. Please contact the administrator.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header"><i class="bi bi-clock-history me-2"></i>Your payment submissions</div>
+    <div class="card-body">
+        {% if submissions %}
+        <div class="table-responsive">
+            <table class="table table-sm align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Submitted at</th>
+                        <th>Plan ID</th>
+                        <th>Reference</th>
+                        <th>Status</th>
+                        <th>Processed at</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in submissions %}
+                    <tr>
+                        <td>{{ s.created_at }}</td>
+                        <td>{{ s.plan_id }}</td>
+                        <td><code>{{ s.reference }}</code></td>
+                        <td><span class="badge {% if s.status == 'approved' %}bg-success{% elif s.status == 'rejected' %}bg-danger{% else %}bg-secondary{% endif %}">{{ s.status|capitalize }}</span></td>
+                        <td>{{ s.processed_at or '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">No payment submissions yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

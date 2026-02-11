@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Exam Seat Allocation{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0d6efd;
+            --primary-dark: #0a58ca;
+            --sidebar-bg: #1a1d29;
+            --sidebar-text: #a0aec0;
+            --content-bg: #f4f6f9;
+        }
+        * { font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--content-bg); min-height: 100vh; }
+        .navbar-brand { font-weight: 700; font-size: 1.25rem; }
+        .card { border: none; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,.06); }
+        .card-header { background: #fff; border-bottom: 1px solid #eee; font-weight: 600; border-radius: 12px 12px 0 0; padding: 1rem 1.25rem; }
+        .btn { border-radius: 8px; font-weight: 500; }
+        .table { font-size: 0.9rem; }
+        .stat-card { transition: transform .2s; }
+        .stat-card:hover { transform: translateY(-2px); }
+        .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+        .sidebar { background: var(--sidebar-bg); min-height: calc(100vh - 56px); padding: 1rem 0; }
+        .sidebar .nav-link { color: var(--sidebar-text); padding: 0.6rem 1.25rem; border-radius: 8px; margin: 0 0.5rem; }
+        .sidebar .nav-link:hover { background: rgba(255,255,255,.08); color: #fff; }
+        .sidebar .nav-link.active { background: var(--primary); color: #fff; }
+        .sidebar .nav-link i { margin-right: 0.5rem; opacity: .9; }
+        .main-content { padding: 1.5rem; }
+        .page-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; color: #1a202c; }
+        .alert { border-radius: 10px; border: none; }
+        .form-control, .form-select { border-radius: 8px; border: 1px solid #e2e8f0; padding: 0.5rem 0.75rem; }
+        .form-control:focus, .form-select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(13,110,253,.15); }
+        .file-upload-zone { border: 2px dashed #cbd5e0; border-radius: 12px; padding: 2rem; text-align: center; background: #f8fafc; transition: all .2s; }
+        .file-upload-zone:hover, .file-upload-zone.dragover { border-color: var(--primary); background: #eff6ff; }
+        .badge { font-weight: 500; padding: 0.4em 0.7em; }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% if request.endpoint != 'auth.login' %}
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="{{ url_for('dashboard.index') }}">
+                <img src="{{ url_for('static', filename='img/irukkai_logo.png') }}" alt="ESAL" style="height: 36px; width: auto;">
+                <span class="d-none d-sm-inline">irukkai-Exam Seat Allocation</span>
+                <span class="d-inline d-sm-none">irukkai</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    {% if current_user.is_authenticated %}
+                    <li class="nav-item">
+                        <span class="nav-link"><i class="bi bi-person-circle"></i> {{ current_user.name or current_user.user_id }}</span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+
+    <div class="d-flex">
+        {% if current_user.is_authenticated %}
+        <div class="sidebar d-none d-md-flex flex-column" style="width: 240px;">
+            <nav class="nav flex-column">
+                <a class="nav-link {{ 'active' if request.endpoint == 'dashboard.index' else '' }}" href="{{ url_for('dashboard.index') }}">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+                <a class="nav-link {{ 'active' if 'departments' in request.endpoint else '' }}" href="{{ url_for('departments.index') }}">
+                    <i class="bi bi-building"></i> Departments
+                </a>
+                <a class="nav-link {{ 'active' if 'students' in request.endpoint else '' }}" href="{{ url_for('students.index') }}">
+                    <i class="bi bi-people"></i> Students
+                </a>
+                <a class="nav-link {{ 'active' if 'subjects' in request.endpoint else '' }}" href="{{ url_for('subjects.index') }}">
+                    <i class="bi bi-journal-text"></i> Subjects
+                </a>
+                <a class="nav-link {{ 'active' if 'exam_halls' in request.endpoint else '' }}" href="{{ url_for('exam_halls.index') }}">
+                    <i class="bi bi-door-open"></i> Exam Halls
+                </a>
+                <a class="nav-link {{ 'active' if 'timetable_generator' in request.endpoint else '' }}" href="{{ url_for('timetable_generator.index') }}">
+                    <i class="bi bi-calendar-range"></i> Exam Timetable
+                </a>
+                <a class="nav-link {{ 'active' if 'exam_schedule' in request.endpoint else '' }}" href="{{ url_for('exam_schedule.index') }}">
+                    <i class="bi bi-calendar-event"></i> Exam Schedule
+                </a>
+                <a class="nav-link {{ 'active' if 'allocation' in request.endpoint else '' }}" href="{{ url_for('allocation.index') }}">
+                    <i class="bi bi-layout-text-sidebar-reverse"></i> Seat Allocation
+                </a>
+                <a class="nav-link {{ 'active' if 'subscriptions' in request.endpoint else '' }}" href="{{ url_for('subscriptions.plans') }}">
+                    <i class="bi bi-gem"></i> Subscription
+                </a>
+            </nav>
+        </div>
+        {% endif %}
+
+        <div class="flex-grow-1 main-content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, msg in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ msg }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
