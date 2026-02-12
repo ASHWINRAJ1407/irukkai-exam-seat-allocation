@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Exam Seat Allocation{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
+    <img src="{{ url_for('static', filename='img/irukkai_logo.png') }}" alt="ESAL" style="height: 52px; width: auto;">
+    <h1 class="page-title mb-0"><i class="bi bi-speedometer2 me-2"></i>Admin Dashboard</h1>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="stat-icon bg-primary bg-opacity-10 text-primary me-3">
+                    <i class="bi bi-building"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0 fw-bold">{{ total_departments }}</h3>
+                    <p class="text-muted mb-0 small">Departments</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="stat-icon bg-success bg-opacity-10 text-success me-3">
+                    <i class="bi bi-people"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0 fw-bold">{{ total_students }}</h3>
+                    <p class="text-muted mb-0 small">Students</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="stat-icon bg-info bg-opacity-10 text-info me-3">
+                    <i class="bi bi-door-open"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0 fw-bold">{{ total_halls }}</h3>
+                    <p class="text-muted mb-0 small">Exam Halls</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="stat-icon bg-warning bg-opacity-10 text-warning me-3">
+                    <i class="bi bi-journal-text"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0 fw-bold">{{ total_subjects }}</h3>
+                    <p class="text-muted mb-0 small">Subjects</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex align-items-center justify-content-between">
+        <span><i class="bi bi-calendar-event me-2"></i>Upcoming Exams</span>
+        <a href="{{ url_for('exam_schedule.index') }}" class="btn btn-sm btn-outline-primary">View All</a>
+    </div>
+    <div class="card-body">
+        {% if upcoming_exams %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Exam</th>
+                        <th>Date</th>
+                        <th>Department</th>
+                        <th>Subject</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for e in upcoming_exams %}
+                    <tr>
+                        <td><strong>{{ e.exam_name }}</strong></td>
+                        <td>{{ e.date }}</td>
+                        <td>{{ e.department }}</td>
+                        <td>{{ e.subject }}</td>
+                        <td>{{ e.time }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted mb-0 text-center py-4"><i class="bi bi-calendar-x me-2"></i>No upcoming exams scheduled.</p>
+        <div class="text-center">
+            <a href="{{ url_for('exam_schedule.add') }}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Create Exam Schedule</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
