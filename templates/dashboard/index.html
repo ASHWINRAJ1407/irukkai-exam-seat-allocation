@@ -3,7 +3,7 @@
 {% block content %}
 <div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
     <img src="{{ url_for('static', filename='img/irukkai_logo.png') }}" alt="ESAL" style="height: 52px; width: auto;">
-    <h1 class="page-title mb-0"><i class="bi bi-speedometer2 me-2"></i>Admin Dashboard</h1>
+    <h1 class="page-title mb-0"><i class="bi bi-speedometer2 me-2"></i>{{ current_user.name }}'s Dashboard</h1>
 </div>
 
 <div class="row g-4 mb-4">
@@ -101,3 +101,4 @@
     </div>
 </div>
 {% endblock %}
+
