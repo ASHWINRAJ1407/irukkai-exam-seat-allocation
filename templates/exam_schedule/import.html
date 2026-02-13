@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Import Exam Schedule - Exam Seat Allocation{% endblock %}
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('exam_schedule.index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header bg-light d-flex align-items-center" data-bs-toggle="collapse" data-bs-target="#formatHelp" style="cursor: pointer;">
+        <i class="bi bi-info-circle me-2"></i><strong>Required Excel/CSV format — click to expand</strong>
+    </div>
+    <div id="formatHelp" class="collapse card-body">
+        <p class="mb-2">To avoid import failures, ensure your file has <strong>exactly these column names</strong> (headers in first row). Column names are case-insensitive and spaces are allowed.</p>
+        <table class="table table-bordered table-sm mb-3" style="max-width: 600px;">
+            <thead class="table-light"><tr><th>Column name</th><th>Description</th></tr></thead>
+            <tbody>
+                <tr><td><code>subject_code</code></td><td>Must match a subject code in Subjects (e.g. CS101)</td></tr>
+                <tr><td><code>department_code</code></td><td>Must match a department code in Departments (e.g. CSE)</td></tr>
+                <tr><td><code>exam_date</code></td><td>Date as YYYY-MM-DD or Excel date</td></tr>
+                <tr><td><code>start_time</code></td><td>Time as HH:MM or HH:MM:SS or Excel time</td></tr>
+                <tr><td><code>end_time</code></td><td>Time as HH:MM or HH:MM:SS or Excel time</td></tr>
+            </tbody>
+        </table>
+        <p class="mb-1"><strong>Example (CSV):</strong></p>
+        <pre class="bg-dark text-light p-2 rounded small">subject_code,department_code,exam_date,start_time,end_time
+CS101,CSE,2024-12-01,09:00,11:00
+MA201,AIDS,2024-12-01,14:00,16:00</pre>
+        <p class="mt-2 mb-0 text-muted small">Notes: Dates and times are parsed automatically. Rows with missing or invalid codes are skipped. All schedules in this file will use the <strong>Batch</strong> you enter below.</p>
+    </div>
+</div>
+
+<div class="card" style="max-width: 560px;">
+    <div class="card-header"><i class="bi bi-upload me-2"></i>Import Exam Schedule from Excel</div>
+    <div class="card-body">
+        <p class="text-muted small mb-3">Enter <strong>Exam Name</strong> and <strong>Batch</strong> once — they apply to every schedule in the file. Supported: <strong>CSV</strong> and <strong>Excel (.xlsx, .xls)</strong>.</p>
+        <form method="post" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="mb-3">
+                <label class="form-label">Exam Name</label>
+                <input type="text" name="exam_name" class="form-control" placeholder="e.g. Model Exam 2024" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Batch</label>
+                <input type="text" name="academic_year" class="form-control" value="2024-25" placeholder="e.g. 2022-26">
+                <span class="form-text">Used for all imported schedule entries.</span>
+            </div>
+            <div class="mb-4">
+                <label class="form-label">Excel / CSV File</label>
+                <input type="file" name="file" class="form-control" accept=".csv,.xlsx,.xls" required>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-upload me-1"></i>Import</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

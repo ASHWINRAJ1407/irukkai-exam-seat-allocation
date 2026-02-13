@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}Generate Timetable - ESAL{% endblock %}
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('timetable_generator.index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+
+<div class="alert alert-success" role="alert">
+    <i class="bi bi-check-circle me-2"></i>
+    <strong>File imported successfully!</strong> Ready to generate the timetable. Provide:
+    <ul class="mb-0 mt-2">
+        <li><strong>Starting date:</strong> First exam date of your schedule</li>
+        <li><strong>Exam timing:</strong> When exams start and end (e.g., 10:00 AM to 1:00 PM)</li>
+        <li><strong>Excluded dates:</strong> Holidays or no-exam days (optional)</li>
+        <li><strong>Batch:</strong> Select which student batch this timetable is for</li>
+    </ul>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header"><i class="bi bi-list-check me-2"></i>Departments & Subject Count</div>
+    <div class="card-body">
+        <p class="mb-2"><strong>Subjects per department (from your uploaded file):</strong></p>
+        <div class="row">
+            {% for dept, count in counts.items()|sort %}
+            <div class="col-md-4 mb-2">
+                <div class="badge bg-info text-dark text-wrap" style="font-size: 0.95rem;">
+                    <strong>{{ dept }}</strong><br/>{{ count }} subject{{ 's' if count > 1 else '' }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <p class="mt-3 mb-0 text-muted small">
+            💡 <strong>Tip:</strong> The timetable will be distributed across days, with a maximum of 2 departments per subject per day 
+            (based on subject names, not codes).
+        </p>
+    </div>
+</div>
+
+<div class="card" style="max-width: 700px;">
+    <div class="card-header"><i class="bi bi-gear me-2"></i>Step 2 — Set date, timing & batch</div>
+    <div class="card-body">
+        <form method="post" action="{{ url_for('timetable_generator.generate_form') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="mb-3">
+                <label class="form-label"><strong>Batch / Academic Year</strong></label>
+                <select name="academic_year" class="form-select">
+                    {% if batches %}
+                        {% for b in batches %}
+                            <option value="{{ b }}" {% if b == academic_year %}selected{% endif %}>{{ b }}</option>
+                        {% endfor %}
+                    {% else %}
+                        <option value="{{ academic_year }}">{{ academic_year }}</option>
+                    {% endif %}
+                </select>
+                <span class="form-text">Select the student batch for this timetable. Make sure all students in your uploaded subjects belong to this batch.</span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label"><strong>Starting date</strong></label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-calendar-date"></i></span>
+                    <input type="date" name="start_date" class="form-control" required>
+                </div>
+                <span class="form-text">First exam date. The system will schedule subjects across multiple days as needed.</span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label"><strong>Exam timing (12-hour format)</strong></label>
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-clock"></i></span>
+                            <select class="form-select" id="start_hour" required>
+                                {% for h in range(1, 13) %}
+                                <option value="{{ '%02d' % h }}">{{ '%02d' % h }}</option>
+                                {% endfor %}
+                            </select>
+                            <select class="form-select" id="start_minute" required>
+                                {% for m in [0, 15, 30, 45] %}
+                                <option value="{{ '%02d' % m }}">{{ '%02d' % m }}</option>
+                                {% endfor %}
+                            </select>
+                            <select class="form-select" id="start_ampm" required>
+                                <option value="AM">AM</option>
+                                <option value="PM">PM</option>
+                            </select>
+                        </div>
+                        <span class="form-text d-block">Start time (HH:MM AM/PM)</span>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-clock-history"></i></span>
+                            <select class="form-select" id="end_hour" required>
+                                {% for h in range(1, 13) %}
+                                <option value="{{ '%02d' % h }}">{{ '%02d' % h }}</option>
+                                {% endfor %}
+                            </select>
+                            <select class="form-select" id="end_minute" required>
+                                {% for m in [0, 15, 30, 45] %}
+                                <option value="{{ '%02d' % m }}">{{ '%02d' % m }}</option>
+                                {% endfor %}
+                            </select>
+                            <select class="form-select" id="end_ampm" required>
+                                <option value="AM">AM</option>
+                                <option value="PM" selected>PM</option>
+                            </select>
+                        </div>
+                        <span class="form-text d-block">End time (HH:MM AM/PM)</span>
+                    </div>
+                </div>
+                <input type="hidden" name="exam_start_time" id="exam_start_time">
+                <input type="hidden" name="exam_end_time" id="exam_end_time">
+                <span class="form-text mt-2 d-block">Same timing is applied to all exams. Times will be shown in PDFs as 12-hour with AM/PM.</span>
+            </div>
+            <div class="mb-4">
+                <label class="form-label">Excluded dates</label>
+                <div id="excluded-dates">
+                    <div class="input-group mb-2">
+                        <span class="input-group-text"><i class="bi bi-calendar2-x"></i></span>
+                        <input type="date" name="excluded_date" class="form-control" value="">
+                    </div>
+                </div>
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="add-excluded"><i class="bi bi-plus me-1"></i>Add another excluded date</button>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-cpu me-1"></i>Generate timetable</button>
+        </form>
+    </div>
+</div>
+
+<script>
+(function() {
+    // Dynamic excluded dates
+    var container = document.getElementById('excluded-dates');
+    var addBtn = document.getElementById('add-excluded');
+    addBtn.addEventListener('click', function() {
+        var div = document.createElement('div');
+        div.className = 'input-group mb-2';
+        div.innerHTML = '<span class="input-group-text"><i class="bi bi-calendar2-x"></i></span><input type="date" name="excluded_date" class="form-control">';
+        container.appendChild(div);
+    });
+
+    // Build 12-hour time strings into hidden inputs before submit
+    var form = document.querySelector('form');
+    form.addEventListener('submit', function() {
+        function buildTime(hourId, minuteId, ampmId) {
+            var h = document.getElementById(hourId).value || '01';
+            var m = document.getElementById(minuteId).value || '00';
+            var ap = document.getElementById(ampmId).value || 'AM';
+            return h + ':' + m + ' ' + ap;
+        }
+        document.getElementById('exam_start_time').value = buildTime('start_hour', 'start_minute', 'start_ampm');
+        document.getElementById('exam_end_time').value = buildTime('end_hour', 'end_minute', 'end_ampm');
+    });
+})();
+</script>
+{% endblock %}
