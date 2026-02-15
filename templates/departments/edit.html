@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Edit Department - Exam Seat Allocation{% endblock %}
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('departments.index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+<div class="card" style="max-width: 500px;">
+    <div class="card-header"><i class="bi bi-pencil me-2"></i>Edit Department</div>
+    <div class="card-body">
+        <form method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="mb-3">
+                <label class="form-label">Name</label>
+                <input type="text" name="name" class="form-control" value="{{ department.name }}" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Code</label>
+                <input type="text" name="code" class="form-control" value="{{ department.code }}" required>
+            </div>
+            <div class="mb-4">
+                <label class="form-label">Total Enrolled Students</label>
+                <input type="number" name="total_students" class="form-control" value="{{ department.total_students }}" min="0">
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Save Changes</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

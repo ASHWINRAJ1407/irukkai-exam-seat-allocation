@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Import Students - Exam Seat Allocation{% endblock %}
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('students.index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+<div class="card" style="max-width: 560px;">
+    <div class="card-header"><i class="bi bi-upload me-2"></i>Import Students from Excel</div>
+    <div class="card-body">
+        <p class="text-muted small mb-4">Supported formats: .csv, .xlsx, .xls. File should have columns for <strong>roll number</strong> (or roll, roll_no) and <strong>name</strong> (or student_name). Optional: <strong>section</strong> (or section_name). If not in file, you can set a default section below.</p>
+        <form method="post" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="mb-3">
+                <label class="form-label">Department</label>
+                <select name="department_id" class="form-select" required>
+                    <option value="">Select Department</option>
+                    {% for d in departments %}
+                    <option value="{{ d.id }}">{{ d.code }} - {{ d.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Section <span class="text-muted">(optional — applied to all if not in file)</span></label>
+                <input type="text" name="section" class="form-control" placeholder="e.g. A or CSE-A">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Batch</label>
+                <input type="text"
+                       name="academic_year"
+                       class="form-control"
+                       value="2024-25"
+                       placeholder="e.g. 2022-26"
+                       list="batch_list">
+                {% if batches %}
+                <datalist id="batch_list">
+                    {% for b in batches %}
+                    <option value="{{ b }}"></option>
+                    {% endfor %}
+                </datalist>
+                {% endif %}
+            </div>
+            <div class="mb-4">
+                <label class="form-label">Excel File</label>
+                <input type="file" name="file" class="form-control" accept=".csv,.xlsx,.xls" required>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-upload me-1"></i>Import</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
