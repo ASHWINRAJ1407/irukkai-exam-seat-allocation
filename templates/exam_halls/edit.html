@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Edit Exam Hall - Exam Seat Allocation{% endblock %}
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('exam_halls.index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+<div class="card" style="max-width: 500px;">
+    <div class="card-header"><i class="bi bi-pencil me-2"></i>Edit Exam Hall</div>
+    <div class="card-body">
+        <form method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="mb-3">
+                <label class="form-label">Hall Number</label>
+                <input type="text" name="hall_number" class="form-control" value="{{ hall.hall_number }}" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Capacity</label>
+                <input type="number" name="capacity" class="form-control" value="{{ hall.capacity }}" min="1">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Building Name</label>
+                <input type="text" name="building_name" class="form-control" value="{{ hall.building_name or '' }}">
+            </div>
+            <div class="mb-4">
+                <label class="form-label">Floor</label>
+                <input type="text" name="floor" class="form-control" value="{{ hall.floor or '' }}">
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Save Changes</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
