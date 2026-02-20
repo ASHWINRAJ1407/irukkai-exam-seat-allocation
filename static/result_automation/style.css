@@ -1,0 +1,94 @@
+/* Result Automation Styles - Mark Analysis Page */
+body .container { max-width: 980px; margin: 0 auto; }
+
+.file-upload-zone { 
+    border: 2px dashed #cbd5e0; 
+    border-radius: 12px; 
+    padding: 1.5rem; 
+    text-align: center; 
+    background: #fafafa;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.file-upload-zone:hover { 
+    border-color: #667eea;
+    background: #f0f4ff;
+}
+
+.file-upload-zone:focus {
+    border-color: #667eea;
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.loading-overlay { 
+    display: none; 
+}
+
+.notification { 
+    z-index: 1050; 
+}
+
+/* Alert Customization */
+.alert-sm {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    margin-bottom: 0;
+}
+
+/* Progress bar animation */
+.progress-bar-animated {
+    animation: progress-bar-stripes 1s linear infinite;
+}
+
+/* Report items responsive styling */
+.report-file-info {
+    min-width: 120px;
+}
+
+.report-file-info i {
+    flex-shrink: 0;
+}
+
+.report-file-info span {
+    word-break: break-word;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .mark-analysis-header {
+        padding: 1.5rem;
+    }
+    
+    .section-title {
+        font-size: 1rem;
+    }
+    
+    .report-item {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 0.75rem;
+    }
+    
+    .report-file-info {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .report-actions {
+        width: 100%;
+        justify-content: stretch;
+    }
+    
+    .report-actions .btn {
+        flex: 1;
+        font-size: 0.75rem;
+        padding: 0.35rem 0.5rem;
+    }
+    
+    .btn-sm {
+        padding: 0.35rem 0.5rem;
+        font-size: 0.75rem;
+    }
+}
