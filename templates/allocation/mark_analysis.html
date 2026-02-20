@@ -1,0 +1,300 @@
+{% extends "base.html" %}
+{% block title %}Mark Analysis - Allocation{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='result_automation/style.css') }}">
+<style>
+    .mark-analysis-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+    .section-card {
+        border-left: 4px solid #667eea;
+        margin-bottom: 1.5rem;
+    }
+    .section-title {
+        color: #667eea;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    .report-item {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 6px;
+        border: 1px solid #dee2e6;
+        margin-bottom: 0.75rem;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.75rem;
+        transition: all 0.3s ease;
+    }
+    .report-item:hover {
+        background: #e7f3ff;
+        border-color: #667eea;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+    }
+    .report-file-info {
+        flex: 1;
+        min-width: 150px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .report-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+    .report-actions .btn {
+        white-space: nowrap;
+    }
+    .no-reports-message {
+        text-align: center;
+        padding: 2rem;
+        color: #6c757d;
+    }
+    .no-reports-message i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+    .upload-zone-label {
+        font-weight: 500;
+        margin-bottom: 0.75rem;
+        display: block;
+    }
+    .form-section {
+        background: #fff;
+        padding: 1.5rem;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="mark-analysis-header">
+    <h3 class="mb-2"><i class="bi bi-clipboard-data me-2"></i>Mark Analysis - Upload Marksheets</h3>
+    <p class="mb-0 small">Upload PDF marksheets (IA1 / IA2 / MODEL) and generate consolidated Excel reports.</p>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <form id="markAnalysisForm" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <!-- Exam Type Section -->
+            <div class="form-section">
+                <label class="upload-zone-label"><i class="bi bi-question-circle me-2"></i>Exam Type <span class="text-danger">*</span></label>
+                <div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="exam_type" id="ia1" value="IA1" required>
+                        <label class="form-check-label" for="ia1"><i class="bi bi-journal-text me-1"></i>IA1</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="exam_type" id="ia2" value="IA2">
+                        <label class="form-check-label" for="ia2"><i class="bi bi-journal-text me-1"></i>IA2</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="exam_type" id="model" value="MODEL">
+                        <label class="form-check-label" for="model"><i class="bi bi-journal-text me-1"></i>Model</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- College Name Section -->
+            <div class="form-section">
+                <label class="upload-zone-label"><i class="bi bi-building me-2"></i>College / Institute Name</label>
+                <input type="text" name="college_name" class="form-control" placeholder="Enter college name (appears on report)">
+                <small class="form-text text-muted">This name will appear on the generated report.</small>
+            </div>
+
+            <!-- File Upload Section -->
+            <div class="form-section">
+                <label class="upload-zone-label"><i class="bi bi-file-pdf me-2"></i>Upload PDF Files <span class="text-danger">*</span></label>
+                <input id="fileInput" type="file" name="files" multiple accept=".pdf" class="form-control file-upload-zone">
+                <small class="form-text text-muted d-block mt-2">You can upload multiple PDF marksheet files. Files will be processed and a consolidated Excel report will be generated.</small>
+                <div id="filePreview" class="mt-2"></div>
+                <div id="uploadProgress" class="progress mt-3" style="height: 24px; display: none;">
+                    <div id="uploadProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%">0%</div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex gap-2">
+                <button id="generateBtn" type="submit" class="btn btn-success btn-lg flex-grow-1">
+                    <i class="bi bi-play-circle me-2"></i>Generate Report
+                </button>
+                {% if exam_id and exam_date %}
+                <a href="{{ url_for('allocation.view', exam_id=exam_id, exam_date=exam_date) }}" class="btn btn-outline-secondary btn-lg">
+                    <i class="bi bi-arrow-left me-1"></i>Back
+                </a>
+                {% else %}
+                <a href="{{ url_for('allocation.index') }}" class="btn btn-outline-secondary btn-lg">
+                    <i class="bi bi-arrow-left me-1"></i>Back to Allocations
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- Generated Reports Sidebar -->
+    <div class="col-lg-4">
+        <div class="section-card card">
+            <div class="card-body">
+                <h6 class="section-title"><i class="bi bi-list-check me-2"></i>Generated Reports</h6>
+                <p class="small text-muted mb-3">Your generated reports appear here. Download or delete as needed.</p>
+                <div id="generatedReportsList"></div>
+            </div>
+        </div>
+
+        <!-- Quick Guide Section -->
+        <div class="section-card card mt-4">
+            <div class="card-body">
+                <h6 class="section-title"><i class="bi bi-lightbulb me-2"></i>Quick Guide</h6>
+                <ol class="small">
+                    <li>Select the <strong>Exam Type</strong> (IA1 / IA2 / MODEL).</li>
+                    <li>Enter your <strong>College / Institute Name</strong> (appears on the report).</li>
+                    <li>Upload one or more <strong>PDF marksheet files</strong> (accepted: <strong>.pdf</strong>).</li>
+                    <li>Click <strong>Generate Report</strong>. Processing status will be shown on-screen.</li>
+                    <li>Your report appears in the <strong>Generated Reports</strong> section. Click to download with your chosen location.</li>
+                    <li>Use the <strong>Delete</strong> button to remove reports you no longer need.</li>
+                </ol>
+                <hr>
+                <p class="small text-muted mb-0">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>PDF Format Tips:</strong> Ensure each PDF contains a header with course code/name and rows with registration number and marks. Absent students should be marked as <strong>AB</strong>.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='result_automation/script.js') }}"></script>
+<script>
+// Fetch current file list from server
+async function fetchGeneratedReports() {
+    try {
+        const response = await fetch('{{ url_for('allocation.get_generated_reports') }}');
+        if(response.ok) {
+            const data = await response.json();
+            return data.files || [];
+        }
+    } catch(error) {
+        console.error('Error fetching reports:', error);
+    }
+    return [];
+}
+
+// Initialize generated reports list with real-time data
+async function initializeGeneratedReports(files = null) {
+    // If files not provided, fetch from server
+    if(files === null) {
+        files = await fetchGeneratedReports();
+    }
+    
+    const list = document.getElementById('generatedReportsList');
+    if(!list) return;
+    
+    list.innerHTML = '';
+    
+    if(!files || files.length === 0) {
+        list.innerHTML = `
+            <div class="no-reports-message">
+                <div><i class="bi bi-inbox"></i></div>
+                <p class="text-muted">No reports generated yet.</p>
+            </div>
+        `;
+    } else {
+        files.forEach(function(filename) {
+            const reportItem = document.createElement('div');
+            reportItem.className = 'report-item';
+            
+            const fileInfo = document.createElement('div');
+            fileInfo.className = 'report-file-info';
+            fileInfo.innerHTML = `
+                <i class="bi bi-file-earmark-excel text-success"></i>
+                <span class="text-truncate small" title="${filename}">${filename}</span>
+            `;
+            reportItem.appendChild(fileInfo);
+            
+            const actions = document.createElement('div');
+            actions.className = 'report-actions';
+            
+            // Download button
+            const downloadBtn = document.createElement('button');
+            downloadBtn.type = 'button';
+            downloadBtn.className = 'btn btn-sm btn-outline-primary';
+            downloadBtn.innerHTML = '<i class="bi bi-download me-1"></i>Download';
+            downloadBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                downloadFile('{{ url_for('allocation.download_result', filename='__FN__') }}'.replace('__FN__', encodeURIComponent(filename)), filename);
+            });
+            actions.appendChild(downloadBtn);
+            
+            // Delete button
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'btn btn-sm btn-outline-danger';
+            deleteBtn.innerHTML = '<i class="bi bi-trash me-1"></i>Delete';
+            deleteBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                if(confirm('Are you sure you want to delete this report?')) {
+                    deleteFile('{{ url_for('allocation.mark_analysis_delete', filename='__FN__') }}'.replace('__FN__', encodeURIComponent(filename)));
+                }
+            });
+            actions.appendChild(deleteBtn);
+            
+            reportItem.appendChild(actions);
+            list.appendChild(reportItem);
+        });
+    }
+}
+
+// Download file with save-as dialog
+function downloadFile(url, filename) {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+// Delete file via AJAX with refresh
+function deleteFile(url) {
+    const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+    
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+    })
+    .then(response => {
+        if(response.ok) {
+            // Refresh the file list immediately (silent refresh)
+            initializeGeneratedReports();
+        } else {
+            alert('Failed to delete file.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while deleting the file.');
+    });
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', initializeGeneratedReports);
+</script>
+{% endblock %}
